@@ -1,0 +1,53 @@
+name: task_manager
+description: "A new Flutter project."
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_bloc: ^9.1.1
+  shared_preferences: ^2.5.3
+  nb_utils: ^7.1.4
+  flutter_svg: ^2.2.0
+  table_calendar: ^3.2.0
+  intl: ^0.20.2
+  bloc_concurrency: ^0.3.0
+  mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_logo.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/svgs/
+  fonts:
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/Sora-Light.ttf
+        - asset: assets/fonts/Sora-Regular.ttf
+        - asset: assets/fonts/Sora-Medium.ttf
+          weight: 300
+        - asset: assets/fonts/Sora-Bold.ttf
+        - asset: assets/fonts/Sora-ExtraLight.ttf
+        - asset: assets/fonts/Sora-ExtraBold.ttf
+          weight: 700
