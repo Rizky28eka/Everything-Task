@@ -35,4 +35,34 @@ class SearchTaskEvent extends TasksEvent{
   SearchTaskEvent({required this.keywords});
 }
 
+class FetchCategoriesEvent extends TasksEvent {}
 
+class AddCategoryEvent extends TasksEvent {
+  final CategoryModel category;
+
+  AddCategoryEvent({required this.category});
+}
+
+class UpdateCategoryEvent extends TasksEvent {
+  final CategoryModel category;
+
+  UpdateCategoryEvent({required this.category});
+}
+
+class DeleteCategoryEvent extends TasksEvent {
+  final CategoryModel category;
+
+  DeleteCategoryEvent({required this.category});
+}
+
+class FilterTasksEvent extends TasksEvent {
+  final TaskPriority? priority;
+  final String? categoryId;
+  final int? sortOption;
+
+  FilterTasksEvent({
+    this.priority,
+    this.categoryId,
+    this.sortOption,
+  });
+}

@@ -1,3 +1,7 @@
+import 'package:task_manager/notifications/notification_service.dart';
+import 'package:task_manager/theme/dark_theme.dart';
+import 'package:task_manager/theme/theme_cubit.dart';
+import 'package:task_manager/theme/theme_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,33 +17,59 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Bloc.observer = BlocStateOberver();
   SharedPreferences preferences = await SharedPreferences.getInstance();
-  runApp(MyApp(preferences: preferences));
+  final notificationService = NotificationService();
+  await notificationService.init();
+  runApp(
+    MyApp(preferences: preferences, notificationService: notificationService),
+  );
 }
 
 class MyApp extends StatelessWidget {
   final SharedPreferences preferences;
+  final NotificationService notificationService;
 
-  const MyApp({super.key, required this.preferences});
+  const MyApp({
+    super.key,
+    required this.preferences,
+    required this.notificationService,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: (context) =>
-          TaskRepository(taskDataProvider: TaskDataProvider(preferences)),
-      child: BlocProvider(
-        create: (context) => TasksBloc(context.read<TaskRepository>()),
-        child: MaterialApp(
-          title: 'Task Manager',
-          debugShowCheckedModeBanner: false,
-          initialRoute: Pages.initial,
-          onGenerateRoute: onGenerateRoute,
-          theme: ThemeData(
-            fontFamily: 'Sora',
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-            canvasColor: Colors.transparent,
-            colorScheme: ColorScheme.fromSeed(seedColor: kPrimaryColor),
-            useMaterial3: true,
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider(
+          create: (context) => TaskRepository(
+            taskDataProvider: TaskDataProvider(preferences),
+            notificationService: notificationService,
           ),
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => TasksBloc(context.read<TaskRepository>()),
+          ),
+          BlocProvider(create: (context) => ThemeCubit(preferences)),
+        ],
+        child: BlocBuilder<ThemeCubit, ThemeState>(
+          builder: (context, state) {
+            return MaterialApp(
+              title: 'Task Manager',
+              debugShowCheckedModeBanner: false,
+              initialRoute: Pages.initial,
+              onGenerateRoute: onGenerateRoute,
+              theme: ThemeData(
+                fontFamily: 'Sora',
+                visualDensity: VisualDensity.adaptivePlatformDensity,
+                canvasColor: Colors.transparent,
+                colorScheme: ColorScheme.fromSeed(seedColor: kPrimaryColor),
+                useMaterial3: true,
+              ),
+              darkTheme: darkTheme,
+              themeMode: state.themeMode,
+            );
+          },
         ),
       ),
     );

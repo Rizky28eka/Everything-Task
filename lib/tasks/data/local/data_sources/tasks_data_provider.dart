@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:task_manager/tasks/data/local/model/category_model.dart';
 import 'package:task_manager/tasks/data/local/model/task_model.dart';
+import 'package:task_manager/tasks/data/local/model/task_priority.dart';
 import 'package:task_manager/utils/exception_handler.dart';
 
 import '../../../../utils/constants.dart';
 
 class TaskDataProvider {
   List<TaskModel> tasks = [];
+  List<CategoryModel> categories = [];
   SharedPreferences? prefs;
 
   TaskDataProvider(this.prefs);
@@ -70,6 +73,12 @@ class TaskDataProvider {
           }
         });
         break;
+      case 3:
+        //sort by priority
+        tasks.sort((a, b) {
+          return b.priority.index.compareTo(a.priority.index);
+        });
+        break;
     }
     return tasks;
   }
@@ -127,5 +136,69 @@ class TaskDataProvider {
       final descriptionMatches = task.description.toLowerCase().contains(searchText);
       return titleMatches || descriptionMatches;
     }).toList();
+  }
+
+  Future<List<CategoryModel>> getCategories() async {
+    try {
+      final List<String>? savedCategories = prefs!.getStringList(Constants.categoryKey);
+      if (savedCategories != null) {
+        categories = savedCategories
+            .map((categoryJson) => CategoryModel.fromJson(json.decode(categoryJson)))
+            .toList();
+      }
+      return categories;
+    } catch (e) {
+      throw Exception(handleException(e));
+    }
+  }
+
+  Future<void> createCategory(CategoryModel category) async {
+    try {
+      categories.add(category);
+      final List<String> categoryJsonList =
+          categories.map((cat) => json.encode(cat.toJson())).toList();
+      await prefs!.setStringList(Constants.categoryKey, categoryJsonList);
+    } catch (exception) {
+      throw Exception(handleException(exception));
+    }
+  }
+
+  Future<List<CategoryModel>> updateCategory(CategoryModel category) async {
+    try {
+      categories[categories.indexWhere((element) => element.id == category.id)] =
+          category;
+      final List<String> categoryJsonList = categories.map((cat) =>
+          json.encode(cat.toJson())).toList();
+      prefs!.setStringList(Constants.categoryKey, categoryJsonList);
+      return categories;
+    } catch (exception) {
+      throw Exception(handleException(exception));
+    }
+  }
+
+  Future<List<CategoryModel>> deleteCategory(CategoryModel category) async {
+    try {
+      categories.remove(category);
+      final List<String> categoryJsonList = categories.map((cat) =>
+          json.encode(cat.toJson())).toList();
+      prefs!.setStringList(Constants.categoryKey, categoryJsonList);
+      return categories;
+    } catch (exception) {
+      throw Exception(handleException(exception));
+    }
+  }
+
+  Future<List<TaskModel>> filterTasks({
+    TaskPriority? priority,
+    String? categoryId,
+  }) async {
+    List<TaskModel> filteredTasks = await getTasks();
+    if (priority != null) {
+      filteredTasks = filteredTasks.where((task) => task.priority == priority).toList();
+    }
+    if (categoryId != null) {
+      filteredTasks = filteredTasks.where((task) => task.categoryIds.contains(categoryId)).toList();
+    }
+    return filteredTasks;
   }
 }

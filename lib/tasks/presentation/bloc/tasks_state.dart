@@ -5,9 +5,18 @@ sealed class TasksState {}
 
 final class FetchTasksSuccess extends TasksState {
   final List<TaskModel> tasks;
+  final List<CategoryModel> categories;
   final bool isSearching;
+  final TaskPriority? selectedPriority;
+  final String? selectedCategoryId;
 
-  FetchTasksSuccess({required this.tasks, this.isSearching = false});
+  FetchTasksSuccess({
+    required this.tasks,
+    this.categories = const [],
+    this.isSearching = false,
+    this.selectedPriority,
+    this.selectedCategoryId,
+  });
 }
 
 final class AddTasksSuccess extends TasksState {}
@@ -33,3 +42,17 @@ final class UpdateTaskFailure extends TasksState {
 }
 
 final class UpdateTaskSuccess extends TasksState {}
+
+final class CategoriesLoading extends TasksState {}
+
+final class FetchCategoriesSuccess extends TasksState {
+  final List<CategoryModel> categories;
+
+  FetchCategoriesSuccess({required this.categories});
+}
+
+final class CategoryOperationFailure extends TasksState {
+  final String error;
+
+  CategoryOperationFailure({required this.error});
+}

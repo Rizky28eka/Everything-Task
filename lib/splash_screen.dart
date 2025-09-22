@@ -20,11 +20,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
   startTimer() async {
     Future.delayed(const Duration(milliseconds: 3000), () {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        Pages.home,
-            (route) => false,
-      );
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          Pages.home,
+          (route) => false,
+        );
+      }
     });
   }
 

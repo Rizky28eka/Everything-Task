@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:task_manager/components/custom_app_bar.dart';
+import 'package:task_manager/tasks/data/local/model/task_priority.dart';
 import 'package:task_manager/tasks/presentation/bloc/tasks_bloc.dart';
 import 'package:task_manager/components/build_text_field.dart';
+import 'package:task_manager/tasks/presentation/widget/filter_dialog.dart';
 import 'package:task_manager/tasks/presentation/widget/task_item_view.dart';
 import 'package:task_manager/utils/color_palette.dart';
 import 'package:task_manager/utils/util.dart';
@@ -23,11 +25,44 @@ class TasksScreen extends StatefulWidget {
 
 class _TasksScreenState extends State<TasksScreen> {
   TextEditingController searchController = TextEditingController();
+  TaskPriority? _selectedPriority;
+  String? _selectedCategoryId;
+  int? _selectedSortOption;
 
   @override
   void initState() {
-    context.read<TasksBloc>().add(FetchTaskEvent());
+    if (mounted) {
+      context.read<TasksBloc>().add(FetchTaskEvent());
+    }
     super.initState();
+  }
+
+  void _showFilterDialog(BuildContext context, FetchTasksSuccess state) async {
+    final bloc = context.read<TasksBloc>();
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        return FilterDialog(
+          allCategories: state.categories,
+          selectedPriority: _selectedPriority,
+          selectedCategoryId: _selectedCategoryId,
+          selectedSortOption: _selectedSortOption,
+        );
+      },
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedPriority = result['priority'];
+        _selectedCategoryId = result['categoryId'];
+        _selectedSortOption = result['sortOption'];
+      });
+      bloc.add(FilterTasksEvent(
+            priority: _selectedPriority,
+            categoryId: _selectedCategoryId,
+            sortOption: _selectedSortOption,
+          ));
+    }
   }
 
   @override
@@ -42,101 +77,37 @@ class _TasksScreenState extends State<TasksScreen> {
             title: 'Hi Iqbal Ganteng',
             showBackArrow: false,
             actionWidgets: [
-              PopupMenuButton<int>(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                elevation: 1,
-                onSelected: (value) {
-                  switch (value) {
-                    case 0:
-                      {
-                        context.read<TasksBloc>().add(
-                          SortTaskEvent(sortOption: 0),
-                        );
-                        break;
-                      }
-                    case 1:
-                      {
-                        context.read<TasksBloc>().add(
-                          SortTaskEvent(sortOption: 1),
-                        );
-                        break;
-                      }
-                    case 2:
-                      {
-                        context.read<TasksBloc>().add(
-                          SortTaskEvent(sortOption: 2),
-                        );
-                        break;
-                      }
+              IconButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, Pages.analytics);
+                },
+                icon: const Icon(Icons.analytics),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, Pages.calendar);
+                },
+                icon: SvgPicture.asset('assets/svgs/calender.svg'),
+              ),
+              BlocBuilder<TasksBloc, TasksState>(
+                builder: (context, state) {
+                  if (state is FetchTasksSuccess) {
+                    return IconButton(
+                      onPressed: () => _showFilterDialog(context, state),
+                      icon: SvgPicture.asset('assets/svgs/filter.svg'),
+                    );
                   }
+                  return IconButton(
+                    onPressed: null,
+                    icon: SvgPicture.asset('assets/svgs/filter.svg'),
+                  );
                 },
-                itemBuilder: (BuildContext context) {
-                  return [
-                    PopupMenuItem<int>(
-                      value: 0,
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/svgs/calender.svg',
-                            width: 15,
-                          ),
-                          const SizedBox(width: 10),
-                          buildText(
-                            'Sort by date',
-                            kBlackColor,
-                            textSmall,
-                            FontWeight.normal,
-                            TextAlign.start,
-                            TextOverflow.clip,
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<int>(
-                      value: 1,
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/svgs/task_checked.svg',
-                            width: 15,
-                          ),
-                          const SizedBox(width: 10),
-                          buildText(
-                            'Completed tasks',
-                            kBlackColor,
-                            textSmall,
-                            FontWeight.normal,
-                            TextAlign.start,
-                            TextOverflow.clip,
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<int>(
-                      value: 2,
-                      child: Row(
-                        children: [
-                          SvgPicture.asset('assets/svgs/task.svg', width: 15),
-                          const SizedBox(width: 10),
-                          buildText(
-                            'Pending tasks',
-                            kBlackColor,
-                            textSmall,
-                            FontWeight.normal,
-                            TextAlign.start,
-                            TextOverflow.clip,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ];
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, Pages.settings);
                 },
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: SvgPicture.asset('assets/svgs/filter.svg'),
-                ),
+                icon: const Icon(Icons.settings),
               ),
             ],
           ),
@@ -202,6 +173,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                   itemBuilder: (context, index) {
                                     return TaskItemView(
                                       taskModel: state.tasks[index],
+                                      allCategories: state.categories,
                                     );
                                   },
                                   separatorBuilder:
@@ -233,7 +205,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                 ),
                                 buildText(
                                   'Manage your task schedule easily\nand efficiently',
-                                  kBlackColor.withOpacity(.5),
+                                  kBlackColor.withAlpha(128),
                                   textSmall,
                                   FontWeight.normal,
                                   TextAlign.center,
